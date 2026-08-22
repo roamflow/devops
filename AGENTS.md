@@ -77,6 +77,7 @@ devops/
 │   │   └── ingress.yaml                # Argo CD Ingress
 │   └── kustomization.yaml
 └── apps/                               # Declarative workload manifests
+    ├── gitea/                          # Gitea Helm Chart & Values
     ├── headlamp/                       # Headlamp Dashboard (Kustomize)
     └── vikunja/                        # Vikunja Task Management (Kustomize)
 ```
