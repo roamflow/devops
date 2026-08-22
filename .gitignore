@@ -1,0 +1,12 @@
+# Secrets and keys
+.secrets/
+*.key
+*.pem
+*.crt
+.env
+*.local
+
+# IDE & temporary
+.vscode/
+.idea/
+*.tmp

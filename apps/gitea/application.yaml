@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitea
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    chart: gitea
+    repoURL: https://dl.gitea.com/charts/
+    targetRevision: 12.5.0
+    helm:
+      valuesObject:
+        gitea:
+          config:
+            server:
+              ROOT_URL: "https://gitea.duylai.duckdns.org/"
+              SSH_DOMAIN: "gitea.duylai.duckdns.org"
+              SSH_PORT: 30222
+        ingress:
+          enabled: true
+          className: traefik
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          hosts:
+            - host: gitea.duylai.duckdns.org
+              paths:
+                - path: /
+                  pathType: Prefix
+          tls:
+            - hosts:
+                - gitea.duylai.duckdns.org
+              secretName: gitea-tls-secret
+        service:
+          ssh:
+            type: NodePort
+            port: 22
+            nodePort: 30222
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitea
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
