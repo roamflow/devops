@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/laiduy98/devops.git
+    repoURL: https://github.com/roamflow/devops.git
     targetRevision: main
     path: infrastructure
   destination:
