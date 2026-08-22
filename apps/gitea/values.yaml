@@ -1,0 +1,28 @@
+gitea:
+  gitea:
+    config:
+      server:
+        ROOT_URL: "https://gitea.duylai.duckdns.org/"
+        SSH_DOMAIN: "gitea.duylai.duckdns.org"
+        SSH_PORT: 30222
+  ingress:
+    enabled: true
+    className: traefik
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+      traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd
+    hosts:
+      - host: gitea.duylai.duckdns.org
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - hosts:
+          - gitea.duylai.duckdns.org
+        secretName: gitea-tls-secret
+  service:
+    ssh:
+      type: NodePort
+      port: 22
+      nodePort: 30222
