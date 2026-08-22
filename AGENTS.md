@@ -1,6 +1,6 @@
-# Personal Kubernetes Cluster (`roamflow`)
+# Personal Kubernetes Cluster (`roamflow`) & GitOps Repository
 
-This document summarizes the architecture, infrastructure, networking, and deployed workloads for the personal Kubernetes cluster.
+This document summarizes the architecture, infrastructure, networking, and GitOps workflow for the personal Kubernetes cluster.
 
 ---
 
@@ -14,6 +14,8 @@ This document summarizes the architecture, infrastructure, networking, and deplo
 - **Default Storage Class**: `local-path` (`rancher.io/local-path`)
 - **Ingress Controller**: Traefik v3 (`v3.6.6`) with K3s Klipper ServiceLB (`svclb-traefik`)
 - **Certificate Management**: [cert-manager](https://cert-manager.io/) (`v1.19.3`) with Let's Encrypt ACME HTTP-01
+- **GitOps Engine**: [Argo CD](https://argo-cd.readthedocs.io/) with automatic synchronization
+- **Secrets Management**: [Bitnami Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) (`kubeseal`)
 - **Base Domain**: `*.duylai.duckdns.org` (DuckDNS)
 
 ---
@@ -38,88 +40,96 @@ The cluster consists of 2 nodes totaling **4 ARM64 OCPUs** and **~24 GB RAM**:
 
 All public endpoints are routed through Traefik using automatic Let's Encrypt TLS certificates issued via `ClusterIssuer/letsencrypt-prod`:
 
-| Service | Namespace | Hostname | Target Backend | Ports | TLS Certificate |
+| Service | Namespace | Hostname | Target Backend | Ports | TLS Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Gitea** | `gitea` | `https://gitea.duylai.duckdns.org` | `gitea-http:3000` | 80, 443 | `gitea-tls-secret` |
-| **Gitea SSH** | `gitea` | `gitea.duylai.duckdns.org:30222` | `gitea-ssh:22` | NodePort `30222` | N/A (SSH) |
-| **Headlamp** | `headlamp` | `https://headlamp.duylai.duckdns.org` | `headlamp:80` | 80, 443 | `headlamp-tls` |
-| **Vikunja** | `vikunja` | `https://tasks.duylai.duckdns.org` | `vikunja:3456` | 80, 443 | `tasks-tls` |
+| **Argo CD** | `argocd` | `https://argocd.duylai.duckdns.org` | `argocd-server:80` | 80, 443 | Valid Let's Encrypt TLS |
+| **Headlamp** | `headlamp` | `https://headlamp.duylai.duckdns.org` | `headlamp:80` | 80, 443 | Valid Let's Encrypt TLS |
+| **Vikunja** | `vikunja` | `https://tasks.duylai.duckdns.org` | `vikunja:3456` | 80, 443 | Valid Let's Encrypt TLS |
+| **Gitea** *(Declared)* | `gitea` | `https://gitea.duylai.duckdns.org` | `gitea-http:3000` | 80, 443 | Valid Let's Encrypt TLS |
 
 ---
 
-## 4. Deployed Workloads & Helm Releases
+## 4. GitOps Repository Structure
 
-### Helm Releases Summary
+This repository is the single source of truth for cluster workloads and configurations:
 
-| Release Name | Namespace | Chart | App Version | Status | Purpose |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **`gitea`** | `gitea` | `gitea-12.5.0` | `1.25.4` | deployed | Self-hosted Git server |
-| **`gitea-runner`** | `gitea` | `actions-0.0.3` | `0.261.3` | deployed | Gitea Actions CI/CD Runner (`act-runner`) |
-| **`vikunja`** | `vikunja` | `vikunja-2.0.0` | `1.0.0` | deployed | Task and project management |
-| **`headlamp`** | `headlamp` | `headlamp-0.44.0` | `0.44.0` | deployed | Kubernetes Web UI / Dashboard |
-| **`cert-manager`** | `cert-manager` | `cert-manager-v1.19.3` | `v1.19.3` | deployed | TLS certificate automation |
-| **`traefik`** | `kube-system` | `traefik-38.0.201+up38.0.2` | `v3.6.6` | deployed | Ingress controller & reverse proxy |
-
----
-
-## 5. Workload Architecture Details
-
-### A. Gitea Ecosystem (`gitea` namespace)
-- **Web App**: `gitea` Deployment running on `roamflow-2`.
-- **Database**: Bitnami PostgreSQL High Availability (`gitea-postgresql-ha`) with `pgpool` load balancer and replicated StatefulSets (`10Gi` PVC per instance).
-- **Cache / Key-Value**: Valkey Cluster (Redis-compatible, 3 StatefulSet replicas with `8Gi` PVC each).
-- **CI/CD Runner**: `gitea-runner-actions-act-runner-0` Daemon/Stateful pod running on `roamflow-1` for executing Gitea Actions workflows.
-- **Storage**: `gitea-shared-storage` (`10Gi` PVC).
-
-### B. Vikunja Task Management (`vikunja` namespace)
-- **Application**: `vikunja` Deployment running on `roamflow-2`.
-- **Storage**:
-  - `vikunja-data` (`2Gi` PVC)
-  - `vikunja-database` (`2Gi` PVC)
-
-### C. Headlamp Cluster Dashboard (`headlamp` namespace)
-- **Application**: `headlamp` Deployment running on `roamflow-1`.
-- **Authentication**: Configured with OIDC and ServiceAccount access tokens (`headlamp-admin-token`, `headlamp-user-token`).
-
-### D. Core Cluster Services (`kube-system` & `cert-manager`)
-- **Metrics Server**: Running on `roamflow-1` for resource monitoring (`kubectl top`).
-- **CoreDNS**: In-cluster DNS provider running on `roamflow-2`.
-- **Local Path Provisioner**: Host-path dynamic storage provisioner on `roamflow-1`.
-- **Cert-Manager**: Controller, CA injector, and Webhook components managing ACME certificates.
+```text
+devops/
+├── bootstrap/                          # One-time bootstrap scripts
+│   ├── 01-cleanup-legacy.sh            # In-place cleanup script
+│   ├── 02-install-sealed-secrets.sh    # Installs Sealed Secrets controller + CLI
+│   ├── 03-install-argocd.sh            # Installs Argo CD + Ingress
+│   └── 04-bootstrap-root-app.sh        # Connects Root Application to GitHub
+├── clusters/
+│   └── roamflow/                       # Argo CD Applications (App-of-Apps)
+│       ├── root-app.yaml               # Root Application entrypoint
+│       ├── infrastructure.yaml         # Argo CD app for core infra
+│       ├── headlamp.yaml               # Argo CD app for Headlamp
+│       ├── vikunja.yaml                # Argo CD app for Vikunja
+│       ├── gitea.yaml                  # Argo CD app for Gitea Helm chart
+│       └── kustomization.yaml
+├── infrastructure/                     # Cluster-wide components
+│   ├── cert-manager/
+│   │   └── cluster-issuer.yaml         # Let's Encrypt ClusterIssuer
+│   ├── middlewares/
+│   │   └── redirect-https.yaml         # Traefik HTTP->HTTPS redirection
+│   ├── argocd/
+│   │   └── ingress.yaml                # Argo CD Ingress
+│   └── kustomization.yaml
+└── apps/                               # Declarative workload manifests
+    ├── headlamp/                       # Headlamp Dashboard (Kustomize)
+    └── vikunja/                        # Vikunja Task Management (Kustomize)
+```
 
 ---
 
-## 6. Storage & Volume Configuration
+## 5. Secrets Management Workflow (Bitnami Sealed Secrets)
 
-Dynamic volume provisioning is provided by Rancher's `local-path` StorageClass (`WaitForFirstConsumer` binding mode):
+To safely store secrets in Git:
 
-| Persistent Volume Claim | Namespace | Size | Access Mode | Bound To |
-| :--- | :--- | :--- | :--- | :--- |
-| `gitea-shared-storage` | `gitea` | 10 GiB | RWO | Shared Git repositories and assets |
-| `data-gitea-postgresql-ha-postgresql-0..2` | `gitea` | 3 x 10 GiB | RWO | PostgreSQL HA database nodes |
-| `valkey-data-gitea-valkey-cluster-0..2` | `gitea` | 3 x 8 GiB | RWO | Valkey cluster persistence |
-| `data-act-runner-gitea-runner-actions-act-runner-0` | `gitea` | 1 GiB | RWO | Gitea Actions runner cache |
-| `vikunja-data` | `vikunja` | 2 GiB | RWO | Vikunja files/uploads |
-| `vikunja-database` | `vikunja` | 2 GiB | RWO | Vikunja database storage |
+1. Create a standard local secret YAML (do **not** commit):
+   ```bash
+   kubectl create secret generic my-secret --from-literal=password=supersecret --dry-run=client -o yaml > secret.yaml
+   ```
+2. Encrypt it with `kubeseal`:
+   ```bash
+   kubeseal -f secret.yaml -w sealed-secret.yaml --controller-name=sealed-secrets-controller --controller-namespace=kube-system
+   ```
+3. Commit `sealed-secret.yaml` to Git. Argo CD and the in-cluster controller will automatically decrypt it.
+
+> [!IMPORTANT]
+> The master encryption key is safely backed up in `.secrets/sealed-secrets-master-key.yaml` (ignored by git).
+
+---
+
+## 6. Access & Credentials
+
+- **Argo CD**: `https://argocd.duylai.duckdns.org`
+  - **Username**: `admin`
+  - **Password**: Retrieve with:
+    ```bash
+    kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+    ```
+- **Headlamp Dashboard**: `https://headlamp.duylai.duckdns.org`
+  - **Login Token**: Retrieve with:
+    ```bash
+    kubectl get secret -n headlamp headlamp-admin-token -o jsonpath="{.data.token}" | base64 -d
+    ```
+- **Vikunja**: `https://tasks.duylai.duckdns.org`
 
 ---
 
 ## 7. Common Operational Commands
 
 ```bash
-# Check cluster node status and resources
-kubectl get nodes -o wide
-kubectl top nodes
-
-# Check pod resource utilization across all namespaces
-kubectl top pods -A
+# Check all pods and sync status
+kubectl get pods -A
+kubectl get applications -n argocd
 
 # Check all ingress routes and TLS certificates
 kubectl get ingress,certificates -A
 
-# View installed Helm releases
-helm list -A
-
-# Inspect cluster events and issues
-kubectl get events -A --sort-by='.lastTimestamp'
+# Test building all kustomize manifests
+kubectl kustomize infrastructure/
+kubectl kustomize clusters/roamflow/
 ```
