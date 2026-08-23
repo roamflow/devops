@@ -20,7 +20,7 @@ stirling-pdf-chart:
     - name: UI_APPNAME
       value: "Stirling PDF"
     - name: SYSTEM_DEFAULTLOCALE
-      value: "vi-VN"
+      value: "en-US"
     - name: FAT_DOCKER
       value: "true"
     - name: SYSTEM_MAXFILESIZE
