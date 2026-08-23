@@ -4,4 +4,5 @@ kind: Kustomization
 resources:
   - cert-manager/cluster-issuer.yaml
   - middlewares/redirect-https.yaml
+  - middlewares/authentik-auth.yaml
   - argocd/ingress.yaml
