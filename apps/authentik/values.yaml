@@ -3,6 +3,8 @@ authentik:
     secret_key: "35SjtkyVmYKUHmTfPcbx3QGyccdbmRz1/fw7wk+CTy6HqqRS"
     error_reporting:
       enabled: false
+    postgresql:
+      password: "AuthentikSecurePostgresPassword2026!"
   server:
     ingress:
       enabled: true
