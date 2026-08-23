@@ -81,8 +81,8 @@ kube-prometheus-stack:
             - grafana.duylai.duckdns.org
     resources:
       limits:
-        cpu: 500m
-        memory: 512Mi
+        cpu: 1000m
+        memory: 1536Mi
       requests:
-        cpu: 50m
-        memory: 128Mi
+        cpu: 100m
+        memory: 256Mi
