@@ -12,6 +12,9 @@ gitea:
       oauth2_client:
         ENABLE_AUTO_REGISTRATION: true
         ACCOUNT_LINKING: auto
+      openid:
+        ENABLE_OPENID_SIGNIN: false
+        ENABLE_OPENID_SIGNUP: false
   ingress:
     enabled: true
     className: traefik
