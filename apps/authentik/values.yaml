@@ -1,10 +1,9 @@
 authentik:
   authentik:
-    secret_key: "35SjtkyVmYKUHmTfPcbx3QGyccdbmRz1/fw7wk+CTy6HqqRS"
+    existingSecret:
+      secretName: authentik-secrets
     error_reporting:
       enabled: false
-    postgresql:
-      password: "AuthentikSecurePostgresPassword2026!"
   server:
     ingress:
       enabled: true
@@ -22,6 +21,9 @@ authentik:
   postgresql:
     enabled: true
     auth:
-      password: "AuthentikSecurePostgresPassword2026!"
+      existingSecret: authentik-postgresql-secret
+      secretKeys:
+        adminPasswordKey: postgres-password
+        userPasswordKey: password
   redis:
     enabled: true

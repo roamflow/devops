@@ -9,4 +9,6 @@
 # IDE & temporary
 .vscode/
 .idea/
-*.tmp
+# Helm charts cache
+charts/
+*.tgz
