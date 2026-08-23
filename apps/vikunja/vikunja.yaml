@@ -42,7 +42,6 @@ data:
             name: "Authentik"
             authurl: "https://auth.duylai.duckdns.org/application/o/vikunja/"
             clientid: "7rrOh2KNtQvAIawxxT3Hyr3ISG8vK4lO9iLVhnNN"
-            clientsecret: "xQHe0HRz8jHuRBsKWpznnzEdcGerj3x6CTyZAR1C2KpDN01Sfx60VGg8YGgoS49RBbU5OiYbgeCX0zUgM6vUjgwm2S6hWSh6Xz33EErIBSD1ZxxzJzDAK0ESDGwhg9bR"
             scope: "openid email profile"
 ---
 apiVersion: apps/v1
@@ -74,6 +73,11 @@ spec:
           value: "/app/vikunja/files/vikunja.db"
         - name: VIKUNJA_FILES_BASEPATH
           value: "/app/vikunja/files"
+        - name: VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_CLIENTSECRET
+          valueFrom:
+            secretKeyRef:
+              name: vikunja-secrets
+              key: VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_CLIENTSECRET
         ports:
         - containerPort: 3456
           name: http
