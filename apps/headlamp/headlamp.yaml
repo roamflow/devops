@@ -53,6 +53,7 @@ spec:
         args:
           - "-in-cluster"
           - "-plugins-dir=/headlamp/plugins"
+          - "-unsafe-use-service-account-token"
         ports:
         - containerPort: 4466
           name: http
