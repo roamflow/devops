@@ -8,3 +8,4 @@ resources:
   - gitea.yaml
   - authentik.yaml
   - stirling-pdf.yaml
+  - monitoring.yaml

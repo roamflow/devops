@@ -1,0 +1,73 @@
+kube-prometheus-stack:
+  # Disable scrapers for components that run embedded inside K3s binary
+  kubeControllerManager:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  kubeProxy:
+    enabled: false
+  kubeEtcd:
+    enabled: false
+
+  # Disable alertmanager to save memory (can be re-enabled anytime)
+  alertmanager:
+    enabled: false
+
+  # Hardware node monitoring (CPU, RAM, Disk, Net on roamflow-1 and roamflow-2)
+  nodeExporter:
+    enabled: true
+
+  # Kubernetes cluster state metrics (Pods, Deployments, PVCs, Nodes)
+  kubeStateMetrics:
+    enabled: true
+
+  # Prometheus Core Engine
+  prometheus:
+    enabled: true
+    prometheusSpec:
+      retention: 7d
+      retentionSize: "10GiB"
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: local-path
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 5Gi
+
+  # Grafana Visualization Dashboards
+  grafana:
+    enabled: true
+    adminPassword: "prom-operator"
+    persistence:
+      enabled: true
+      storageClassName: local-path
+      size: 2Gi
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+        traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd
+      hosts:
+        - grafana.duylai.duckdns.org
+      tls:
+        - secretName: grafana-tls
+          hosts:
+            - grafana.duylai.duckdns.org
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
