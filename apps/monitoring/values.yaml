@@ -43,10 +43,25 @@ kube-prometheus-stack:
               requests:
                 storage: 5Gi
 
-  # Grafana Visualization Dashboards
+  # Grafana Visualization Dashboards & Authentik SSO
   grafana:
     enabled: true
     adminPassword: "prom-operator"
+    envFromSecret: "grafana-secrets"
+    grafana.ini:
+      server:
+        root_url: "https://grafana.duylai.duckdns.org"
+      auth.generic_oauth:
+        enabled: true
+        name: "Authentik"
+        allow_sign_up: true
+        client_id: "grafana"
+        scopes: "openid profile email"
+        auth_url: "https://auth.duylai.duckdns.org/application/o/authorize/"
+        token_url: "https://auth.duylai.duckdns.org/application/o/token/"
+        api_url: "https://auth.duylai.duckdns.org/application/o/userinfo/"
+        role_attribute_path: "contains(groups[*], 'authentik Admins') && 'Admin' || contains(groups[*], 'Grafana Admins') && 'Admin' || 'Editor'"
+        allow_assign_grafana_admin: true
     persistence:
       enabled: true
       storageClassName: local-path
