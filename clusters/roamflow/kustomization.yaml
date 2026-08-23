@@ -6,3 +6,4 @@ resources:
   - headlamp.yaml
   - vikunja.yaml
   - gitea.yaml
+  - authentik.yaml
