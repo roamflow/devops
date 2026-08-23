@@ -16,6 +16,35 @@ spec:
     requests:
       storage: 2Gi
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vikunja-config
+  namespace: vikunja
+data:
+  config.yml: |
+    service:
+      publicurl: "https://tasks.duylai.duckdns.org/"
+      enableregistration: false
+    database:
+      type: "sqlite"
+      path: "/app/vikunja/files/vikunja.db"
+    files:
+      basepath: "/app/vikunja/files"
+    auth:
+      local:
+        enabled: true
+      openid:
+        enabled: true
+        redirecturl: "https://tasks.duylai.duckdns.org/auth/openid/"
+        providers:
+          authentik:
+            name: "Authentik"
+            authurl: "https://auth.duylai.duckdns.org/application/o/vikunja/"
+            clientid: "7rrOh2KNtQvAIawxxT3Hyr3ISG8vK4lO9iLVhnNN"
+            clientsecret: "xQHe0HRz8jHuRBsKWpznnzEdcGerj3x6CTyZAR1C2KpDN01Sfx60VGg8YGgoS49RBbU5OiYbgeCX0zUgM6vUjgwm2S6hWSh6Xz33EErIBSD1ZxxzJzDAK0ESDGwhg9bR"
+            scope: "openid email profile"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -51,6 +80,8 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /app/vikunja/files
+        - name: config
+          mountPath: /etc/vikunja
         resources:
           limits:
             cpu: 500m
@@ -62,6 +93,9 @@ spec:
       - name: data
         persistentVolumeClaim:
           claimName: vikunja-data
+      - name: config
+        configMap:
+          name: vikunja-config
 ---
 apiVersion: v1
 kind: Service
