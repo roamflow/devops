@@ -3,8 +3,8 @@ name: authentik-app
 description: Authentik Identity and SSO Platform
 type: application
 version: 1.0.0
-appVersion: "2024.12.3"
+appVersion: "2026.8.0"
 dependencies:
   - name: authentik
-    version: "2024.12.3"
+    version: "2026.8.0"
     repository: https://charts.goauthentik.io
