@@ -1,0 +1,36 @@
+stirling-pdf-chart:
+  image:
+    registry: docker.io
+    repository: stirlingtools/stirling-pdf
+    tag: latest
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    pathType: Prefix
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+      traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd
+    hosts:
+      - name: pdf.duylai.duckdns.org
+        path: /
+        tls: true
+        tlsSecret: pdf-tls
+  envs:
+    - name: UI_APPNAME
+      value: "Stirling PDF"
+    - name: SYSTEM_DEFAULTLOCALE
+      value: "vi-VN"
+    - name: FAT_DOCKER
+      value: "true"
+    - name: SYSTEM_MAXFILESIZE
+      value: "500"
+    - name: SECURITY_ENABLELOGIN
+      value: "false"
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1024Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi

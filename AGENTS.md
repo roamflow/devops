@@ -47,6 +47,7 @@ All public endpoints are routed through Traefik using automatic Let's Encrypt TL
 | **Vikunja** | `vikunja` | `https://tasks.duylai.duckdns.org` | `vikunja:3456` | 80, 443 | Valid Let's Encrypt TLS |
 | **Gitea** | `gitea` | `https://gitea.duylai.duckdns.org` | `gitea-http:3000` | 80, 443 | Valid Let's Encrypt TLS |
 | **Authentik SSO** | `authentik` | `https://auth.duylai.duckdns.org` | `authentik-server:80` | 80, 443 | Valid Let's Encrypt TLS |
+| **Stirling PDF** | `stirling-pdf` | `https://pdf.duylai.duckdns.org` | `stirling-pdf-stirling-pdf-chart:8080` | 80, 443 | Valid Let's Encrypt TLS |
 
 ---
 
@@ -69,6 +70,7 @@ devops/
 │       ├── vikunja.yaml                # Argo CD app for Vikunja
 │       ├── gitea.yaml                  # Argo CD app for Gitea Helm chart
 │       ├── authentik.yaml              # Argo CD app for Authentik SSO
+│       ├── stirling-pdf.yaml           # Argo CD app for Stirling-PDF
 │       └── kustomization.yaml
 ├── infrastructure/                     # Cluster-wide components
 │   ├── cert-manager/
@@ -82,6 +84,7 @@ devops/
     ├── authentik/                      # Authentik Identity & SSO Platform
     ├── gitea/                          # Gitea Helm Chart & Values
     ├── headlamp/                       # Headlamp Dashboard (Kustomize)
+    ├── stirling-pdf/                   # Stirling-PDF Tool (Helm Chart)
     └── vikunja/                        # Vikunja Task Management (Kustomize)
 ```
 

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: stirling-pdf-app
+description: Stirling-PDF Web Tool
+type: application
+version: 1.0.0
+appVersion: "2.5.1"
+dependencies:
+  - name: stirling-pdf-chart
+    version: "3.1.0"
+    repository: https://stirling-tools.github.io/Stirling-PDF-chart

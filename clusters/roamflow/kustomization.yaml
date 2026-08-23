@@ -7,3 +7,4 @@ resources:
   - vikunja.yaml
   - gitea.yaml
   - authentik.yaml
+  - stirling-pdf.yaml
