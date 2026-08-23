@@ -3,19 +3,20 @@ authentik:
     secret_key: "35SjtkyVmYKUHmTfPcbx3QGyccdbmRz1/fw7wk+CTy6HqqRS"
     error_reporting:
       enabled: false
-  ingress:
-    enabled: true
-    ingressClassName: traefik
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-      traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-      traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd
-    hosts:
-      - auth.duylai.duckdns.org
-    tls:
-      - hosts:
-          - auth.duylai.duckdns.org
-        secretName: authentik-tls
+  server:
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+        traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd
+      hosts:
+        - auth.duylai.duckdns.org
+      tls:
+        - hosts:
+            - auth.duylai.duckdns.org
+          secretName: authentik-tls
   postgresql:
     enabled: true
     auth:
