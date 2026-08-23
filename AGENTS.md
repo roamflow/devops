@@ -45,7 +45,8 @@ All public endpoints are routed through Traefik using automatic Let's Encrypt TL
 | **Argo CD** | `argocd` | `https://argocd.duylai.duckdns.org` | `argocd-server:80` | 80, 443 | Valid Let's Encrypt TLS |
 | **Headlamp** | `headlamp` | `https://headlamp.duylai.duckdns.org` | `headlamp:80` | 80, 443 | Valid Let's Encrypt TLS |
 | **Vikunja** | `vikunja` | `https://tasks.duylai.duckdns.org` | `vikunja:3456` | 80, 443 | Valid Let's Encrypt TLS |
-| **Gitea** *(Declared)* | `gitea` | `https://gitea.duylai.duckdns.org` | `gitea-http:3000` | 80, 443 | Valid Let's Encrypt TLS |
+| **Gitea** | `gitea` | `https://gitea.duylai.duckdns.org` | `gitea-http:3000` | 80, 443 | Valid Let's Encrypt TLS |
+| **Authentik SSO** | `authentik` | `https://auth.duylai.duckdns.org` | `authentik-server:80` | 80, 443 | Valid Let's Encrypt TLS |
 
 ---
 
@@ -67,6 +68,7 @@ devops/
 │       ├── headlamp.yaml               # Argo CD app for Headlamp
 │       ├── vikunja.yaml                # Argo CD app for Vikunja
 │       ├── gitea.yaml                  # Argo CD app for Gitea Helm chart
+│       ├── authentik.yaml              # Argo CD app for Authentik SSO
 │       └── kustomization.yaml
 ├── infrastructure/                     # Cluster-wide components
 │   ├── cert-manager/
@@ -77,6 +79,7 @@ devops/
 │   │   └── ingress.yaml                # Argo CD Ingress
 │   └── kustomization.yaml
 └── apps/                               # Declarative workload manifests
+    ├── authentik/                      # Authentik Identity & SSO Platform
     ├── gitea/                          # Gitea Helm Chart & Values
     ├── headlamp/                       # Headlamp Dashboard (Kustomize)
     └── vikunja/                        # Vikunja Task Management (Kustomize)
