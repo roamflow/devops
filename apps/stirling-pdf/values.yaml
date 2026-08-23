@@ -27,10 +27,23 @@ stirling-pdf-chart:
       value: "500"
     - name: SECURITY_ENABLELOGIN
       value: "false"
+  probes:
+    liveness:
+      enabled: true
+      initialDelaySeconds: 120
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 6
+    readiness:
+      enabled: true
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
   resources:
     limits:
-      cpu: 1000m
-      memory: 1024Mi
+      cpu: 2000m
+      memory: 2048Mi
     requests:
-      cpu: 50m
-      memory: 128Mi
+      cpu: 100m
+      memory: 512Mi
