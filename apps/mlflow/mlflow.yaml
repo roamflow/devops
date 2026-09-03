@@ -43,7 +43,7 @@ spec:
           - mlflow
           - server
           - --backend-store-uri
-          - sqlite:////mlflow/data/mlflow.db
+          - sqlite:////mlflow/mlflow.db
           - --default-artifact-root
           - /mlflow/artifacts
           - --host
