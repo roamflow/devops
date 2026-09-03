@@ -50,6 +50,8 @@ spec:
           - 0.0.0.0
           - --port
           - "5000"
+          - --workers
+          - "2"
           - --allowed-hosts
           - "*"
         ports:
@@ -61,7 +63,7 @@ spec:
             memory: 256Mi
           limits:
             cpu: 1000m
-            memory: 1Gi
+            memory: 1.5Gi
         livenessProbe:
           httpGet:
             path: /health
