@@ -49,6 +49,8 @@ All public endpoints are routed through Traefik using automatic Let's Encrypt TL
 | **Authentik SSO** | `authentik` | `https://auth.duylai.duckdns.org` | `authentik-server:80` | 80, 443 | Valid Let's Encrypt TLS |
 | **Stirling PDF** | `stirling-pdf` | `https://pdf.duylai.duckdns.org` | `stirling-pdf-stirling-pdf-chart:8080` | 80, 443 | Valid Let's Encrypt TLS |
 | **Grafana Dashboards** | `monitoring` | `https://grafana.duylai.duckdns.org` | `monitoring-grafana:80` | 80, 443 | Valid Let's Encrypt TLS |
+| **MLflow Tracking** | `mlflow` | `https://mlflow.duylai.duckdns.org` | `mlflow:5000` | 80, 443 | Valid Let's Encrypt TLS (Authentik SSO) |
+| **Dagster Platform** | `dagster` | `https://dagster.duylai.duckdns.org` | `dagster-webserver:3000` | 80, 443 | Valid Let's Encrypt TLS (Authentik SSO) |
 
 ---
 
@@ -73,6 +75,8 @@ devops/
 │       ├── authentik.yaml              # Argo CD app for Authentik SSO
 │       ├── stirling-pdf.yaml           # Argo CD app for Stirling-PDF
 │       ├── monitoring.yaml             # Argo CD app for Prometheus & Grafana
+│       ├── mlflow.yaml                 # Argo CD app for MLflow Tracking Server
+│       ├── dagster.yaml                # Argo CD app for Dagster Data Platform
 │       └── kustomization.yaml
 ├── infrastructure/                     # Cluster-wide components
 │   ├── cert-manager/
@@ -84,8 +88,10 @@ devops/
 │   └── kustomization.yaml
 └── apps/                               # Declarative workload manifests
     ├── authentik/                      # Authentik Identity & SSO Platform
+    ├── dagster/                        # Dagster Webserver, Daemon & Postgres
     ├── gitea/                          # Gitea Helm Chart & Values
     ├── headlamp/                       # Headlamp Dashboard (Kustomize)
+    ├── mlflow/                         # MLflow Tracking Server & SQLite
     ├── monitoring/                     # Prometheus, Grafana, Node Exporter
     ├── stirling-pdf/                   # Stirling-PDF Tool (Helm Chart)
     └── vikunja/                        # Vikunja Task Management (Kustomize)

@@ -1,0 +1,310 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dagster
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dagster-postgresql-data
+  namespace: dagster
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dagster-postgresql
+  namespace: dagster
+  labels:
+    app: dagster-postgresql
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: dagster-postgresql
+  template:
+    metadata:
+      labels:
+        app: dagster-postgresql
+    spec:
+      containers:
+      - name: postgresql
+        image: postgres:16-alpine
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - secretRef:
+            name: dagster-postgresql-secret
+        ports:
+        - name: postgresql
+          containerPort: 5432
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - dagster
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - dagster
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgresql-data
+        persistentVolumeClaim:
+          claimName: dagster-postgresql-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dagster-postgresql
+  namespace: dagster
+  labels:
+    app: dagster-postgresql
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    name: postgresql
+  selector:
+    app: dagster-postgresql
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dagster-venv
+  namespace: dagster
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dagster-storage
+  namespace: dagster
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dagster
+  namespace: dagster
+  labels:
+    app: dagster
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: dagster
+  template:
+    metadata:
+      labels:
+        app: dagster
+    spec:
+      initContainers:
+      - name: wait-for-pg-and-setup-venv
+        image: python:3.11-slim
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            set -e
+            echo "Checking Python virtualenv for Dagster..."
+            if [ ! -f /opt/dagster/venv/bin/dagster-webserver ]; then
+              echo "Creating virtualenv and installing Dagster stack on ARM64..."
+              python3 -m venv /opt/dagster/venv
+              /opt/dagster/venv/bin/pip install --no-cache-dir \
+                dagster \
+                dagster-webserver \
+                dagster-postgres \
+                dagster-k8s \
+                dagster-mlflow \
+                mlflow
+              echo "Dagster installation completed."
+            else
+              echo "Dagster virtualenv already initialized."
+            fi
+        volumeMounts:
+        - name: dagster-venv
+          mountPath: /opt/dagster/venv
+      containers:
+      - name: dagster-webserver
+        image: python:3.11-slim
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            exec /opt/dagster/venv/bin/dagster-webserver \
+              -h 0.0.0.0 \
+              -p 3000 \
+              -w /opt/dagster/dagster_home/workspace.yaml
+        env:
+        - name: DAGSTER_HOME
+          value: /opt/dagster/dagster_home
+        - name: DAGSTER_PG_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: dagster-postgresql-secret
+              key: POSTGRES_PASSWORD
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow.mlflow.svc.cluster.local:5000"
+        ports:
+        - name: http
+          containerPort: 3000
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        readinessProbe:
+          httpGet:
+            path: /server_info
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /server_info
+            port: 3000
+          initialDelaySeconds: 20
+          periodSeconds: 15
+        volumeMounts:
+        - name: dagster-venv
+          mountPath: /opt/dagster/venv
+        - name: dagster-config
+          mountPath: /opt/dagster/dagster_home/dagster.yaml
+          subPath: dagster.yaml
+        - name: dagster-config
+          mountPath: /opt/dagster/dagster_home/workspace.yaml
+          subPath: workspace.yaml
+        - name: dagster-config
+          mountPath: /opt/dagster/app/repo.py
+          subPath: repo.py
+        - name: dagster-storage
+          mountPath: /opt/dagster/storage
+      - name: dagster-daemon
+        image: python:3.11-slim
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            exec /opt/dagster/venv/bin/dagster-daemon run
+        env:
+        - name: DAGSTER_HOME
+          value: /opt/dagster/dagster_home
+        - name: DAGSTER_PG_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: dagster-postgresql-secret
+              key: POSTGRES_PASSWORD
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow.mlflow.svc.cluster.local:5000"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: dagster-venv
+          mountPath: /opt/dagster/venv
+        - name: dagster-config
+          mountPath: /opt/dagster/dagster_home/dagster.yaml
+          subPath: dagster.yaml
+        - name: dagster-config
+          mountPath: /opt/dagster/dagster_home/workspace.yaml
+          subPath: workspace.yaml
+        - name: dagster-config
+          mountPath: /opt/dagster/app/repo.py
+          subPath: repo.py
+        - name: dagster-storage
+          mountPath: /opt/dagster/storage
+      volumes:
+      - name: dagster-venv
+        persistentVolumeClaim:
+          claimName: dagster-venv
+      - name: dagster-storage
+        persistentVolumeClaim:
+          claimName: dagster-storage
+      - name: dagster-config
+        configMap:
+          name: dagster-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dagster-webserver
+  namespace: dagster
+  labels:
+    app: dagster
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    name: http
+  selector:
+    app: dagster
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dagster-ingress
+  namespace: dagster
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd,kube-system-authentik-auth@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - dagster.duylai.duckdns.org
+    secretName: dagster-tls
+  rules:
+  - host: dagster.duylai.duckdns.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dagster-webserver
+            port:
+              number: 3000

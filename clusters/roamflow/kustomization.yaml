@@ -9,3 +9,5 @@ resources:
   - authentik.yaml
   - stirling-pdf.yaml
   - monitoring.yaml
+  - mlflow.yaml
+  - dagster.yaml
