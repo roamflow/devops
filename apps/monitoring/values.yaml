@@ -126,7 +126,7 @@ loki:
     persistence:
       enabled: true
       size: 5Gi
-      storageClassName: local-path
+      storageClass: local-path
     resources:
       requests:
         cpu: 100m
