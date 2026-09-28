@@ -51,6 +51,7 @@ All public endpoints are routed through Traefik using automatic Let's Encrypt TL
 | **Grafana Dashboards** | `monitoring` | `https://grafana.duylai.duckdns.org` | `monitoring-grafana:80` | 80, 443 | Valid Let's Encrypt TLS |
 | **MLflow Tracking** | `mlflow` | `https://mlflow.duylai.duckdns.org` | `mlflow:5000` | 80, 443 | Valid Let's Encrypt TLS (Authentik SSO) |
 | **Dagster Platform** | `dagster` | `https://dagster.duylai.duckdns.org` | `dagster-webserver:3000` | 80, 443 | Valid Let's Encrypt TLS (Authentik SSO) |
+| **Changedetection** | `changedetection` | `https://changedetection.duylai.duckdns.org` | `changedetection:5000` | 80, 443 | Valid Let's Encrypt TLS (Authentik SSO) |
 
 ---
 
@@ -77,6 +78,7 @@ devops/
 │       ├── monitoring.yaml             # Argo CD app for Prometheus & Grafana
 │       ├── mlflow.yaml                 # Argo CD app for MLflow Tracking Server
 │       ├── dagster.yaml                # Argo CD app for Dagster Data Platform
+│       ├── changedetection.yaml        # Argo CD app for Changedetection.io
 │       └── kustomization.yaml
 ├── infrastructure/                     # Cluster-wide components
 │   ├── cert-manager/
@@ -88,6 +90,7 @@ devops/
 │   └── kustomization.yaml
 └── apps/                               # Declarative workload manifests
     ├── authentik/                      # Authentik Identity & SSO Platform
+    ├── changedetection/                # Changedetection.io Website Monitor (Kustomize)
     ├── dagster/                        # Dagster Webserver, Daemon & Postgres
     ├── gitea/                          # Gitea Helm Chart & Values
     ├── headlamp/                       # Headlamp Dashboard (Kustomize)

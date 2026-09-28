@@ -74,6 +74,7 @@ All services are exposed via Traefik with automatic Let's Encrypt certificates i
 | **Gitea** | `gitea` | `https://gitea.duylai.duckdns.org` | Self-hosted Git & OCI container registry | Authentik OIDC OAuth |
 | **Vikunja** | `vikunja` | `https://tasks.duylai.duckdns.org` | Task and project management platform | Authentik OIDC OAuth |
 | **Stirling PDF** | `stirling-pdf` | `https://pdf.duylai.duckdns.org` | Web-based PDF manipulation utilities | Public / Direct |
+| **Changedetection** | `changedetection` | `https://changedetection.duylai.duckdns.org` | Website & API change detection and monitoring | Authentik SSO (ForwardAuth) |
 | **Argo CD** | `argocd` | `https://argocd.duylai.duckdns.org` | Declarative GitOps deployment engine | Local / Admin Secret |
 
 ---

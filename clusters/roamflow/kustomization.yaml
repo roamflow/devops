@@ -11,3 +11,4 @@ resources:
   - monitoring.yaml
   - mlflow.yaml
   - dagster.yaml
+  - changedetection.yaml
