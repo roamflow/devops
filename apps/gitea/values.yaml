@@ -32,6 +32,23 @@ gitea:
       - hosts:
           - gitea.duylai.duckdns.org
         secretName: gitea-tls-secret
+  postgresql-ha:
+    postgresql:
+      resources:
+        requests:
+          cpu: 250m
+          memory: 512Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+    pgpool:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 375m
+          memory: 768Mi
   service:
     ssh:
       type: NodePort
