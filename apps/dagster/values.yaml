@@ -46,9 +46,7 @@ ingress:
 
 # External gRPC code locations (populated when deploying separate user code location repos)
 workspace:
-  grpcServers: []
-  # Example:
-  # grpcServers:
-  #   - host: dagster-pipeline-code
-  #     port: 4000
-  #     locationName: iris_pipeline
+  grpcServers:
+    - host: ml-pipelines
+      port: 4000
+      locationName: ml_pipelines
