@@ -5,11 +5,11 @@ postgresql:
   secretName: dagster-postgresql-secret
   resources:
     requests:
-      cpu: 50m
-      memory: 64Mi
+      cpu: 100m
+      memory: 128Mi
     limits:
-      cpu: 500m
-      memory: 256Mi
+      cpu: 1000m
+      memory: 512Mi
 
 dagster:
   image: python:3.11-slim
@@ -20,19 +20,19 @@ dagster:
     port: 3000
     resources:
       requests:
-        cpu: 100m
-        memory: 256Mi
+        cpu: 150m
+        memory: 384Mi
       limits:
         cpu: 1000m
         memory: 1Gi
   daemon:
     resources:
       requests:
-        cpu: 100m
-        memory: 256Mi
+        cpu: 150m
+        memory: 384Mi
       limits:
-        cpu: 500m
-        memory: 512Mi
+        cpu: 1000m
+        memory: 1Gi
 
 ingress:
   enabled: true

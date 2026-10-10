@@ -31,6 +31,7 @@ data:
             env: DAGSTER_PG_PASSWORD
           db_name: dagster
           port: 5432
+          scheme: postgresql+psycopg2
 
   workspace.yaml: |
     load_from:
