@@ -46,6 +46,8 @@ spec:
             value: "5000"
           - name: HIDE_REFERER
             value: "true"
+          - name: PLAYWRIGHT_DRIVER_URL
+            value: "ws://127.0.0.1:3000"
         ports:
         - name: http
           containerPort: 5000
@@ -71,10 +73,57 @@ spec:
         volumeMounts:
         - name: datastore
           mountPath: /datastore
+      - name: playwright-chrome
+        image: dgtlmoon/sockpuppetbrowser:latest
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            add:
+              - SYS_ADMIN
+        env:
+          - name: SCREEN_WIDTH
+            value: "1920"
+          - name: SCREEN_HEIGHT
+            value: "1080"
+          - name: SCREEN_DEPTH
+            value: "24"
+          - name: MAX_CONCURRENT_CHROME_PROCESSES
+            value: "10"
+        ports:
+        - name: ws
+          containerPort: 3000
+        - name: stats
+          containerPort: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /stats
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /stats
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        volumeMounts:
+        - name: dshm
+          mountPath: /dev/shm
       volumes:
       - name: datastore
         persistentVolumeClaim:
           claimName: changedetection-data
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 256Mi
 ---
 apiVersion: v1
 kind: Service
