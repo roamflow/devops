@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "changedetection.fullname" . }}
+  labels:
+    {{- include "changedetection.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "changedetection.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "changedetection.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: changedetection
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: BASE_URL
+              value: {{ .Values.env.baseUrl | quote }}
+            - name: PORT
+              value: {{ .Values.env.port | quote }}
+            - name: HIDE_REFERER
+              value: {{ .Values.env.hideReferer | quote }}
+            {{- if .Values.playwright.enabled }}
+            - name: PLAYWRIGHT_DRIVER_URL
+              value: {{ .Values.playwright.driverUrl | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 5000
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.probes.liveness }}
+          livenessProbe:
+            httpGet:
+              path: {{ .path }}
+              port: 5000
+            initialDelaySeconds: {{ .initialDelaySeconds }}
+            periodSeconds: {{ .periodSeconds }}
+          {{- end }}
+          {{- with .Values.probes.readiness }}
+          readinessProbe:
+            httpGet:
+              path: {{ .path }}
+              port: 5000
+            initialDelaySeconds: {{ .initialDelaySeconds }}
+            periodSeconds: {{ .periodSeconds }}
+          {{- end }}
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: datastore
+              mountPath: {{ .Values.persistence.mountPath }}
+          {{- end }}
+        {{- if .Values.playwright.enabled }}
+        - name: playwright-chrome
+          image: "{{ .Values.playwright.image.repository }}:{{ .Values.playwright.image.tag }}"
+          imagePullPolicy: {{ .Values.playwright.image.pullPolicy }}
+          securityContext:
+            capabilities:
+              add:
+                - SYS_ADMIN
+          env:
+            - name: SCREEN_WIDTH
+              value: {{ .Values.playwright.screenWidth | quote }}
+            - name: SCREEN_HEIGHT
+              value: {{ .Values.playwright.screenHeight | quote }}
+            - name: SCREEN_DEPTH
+              value: {{ .Values.playwright.screenDepth | quote }}
+            - name: MAX_CONCURRENT_CHROME_PROCESSES
+              value: {{ .Values.playwright.maxConcurrentProcesses | quote }}
+          ports:
+            - name: ws
+              containerPort: {{ .Values.playwright.port }}
+            - name: stats
+              containerPort: {{ .Values.playwright.statsPort }}
+          resources:
+            {{- toYaml .Values.playwright.resources | nindent 12 }}
+          {{- with .Values.playwright.probes.liveness }}
+          livenessProbe:
+            httpGet:
+              path: {{ .path }}
+              port: {{ $.Values.playwright.statsPort }}
+            initialDelaySeconds: {{ .initialDelaySeconds }}
+            periodSeconds: {{ .periodSeconds }}
+          {{- end }}
+          {{- with .Values.playwright.probes.readiness }}
+          readinessProbe:
+            httpGet:
+              path: {{ .path }}
+              port: {{ $.Values.playwright.statsPort }}
+            initialDelaySeconds: {{ .initialDelaySeconds }}
+            periodSeconds: {{ .periodSeconds }}
+          {{- end }}
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+        {{- end }}
+      volumes:
+        {{- if .Values.persistence.enabled }}
+        - name: datastore
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default .Values.persistence.claimName | default "changedetection-data" }}
+        {{- end }}
+        {{- if .Values.playwright.enabled }}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.playwright.shmSize | default "256Mi" }}
+        {{- end }}

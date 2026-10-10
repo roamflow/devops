@@ -1,0 +1,82 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/dgtlmoon/changedetection.io
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+env:
+  baseUrl: "https://changedetection.duylai.duckdns.org"
+  port: 5000
+  hideReferer: true
+
+playwright:
+  enabled: true
+  image:
+    repository: dgtlmoon/sockpuppetbrowser
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  driverUrl: "ws://127.0.0.1:3000"
+  port: 3000
+  statsPort: 8080
+  screenWidth: 1920
+  screenHeight: 1080
+  screenDepth: 24
+  maxConcurrentProcesses: 10
+  shmSize: 256Mi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  probes:
+    liveness:
+      path: /stats
+      initialDelaySeconds: 15
+      periodSeconds: 20
+    readiness:
+      path: /stats
+      initialDelaySeconds: 10
+      periodSeconds: 10
+
+service:
+  type: ClusterIP
+  port: 5000
+
+persistence:
+  enabled: true
+  claimName: changedetection-data
+  storageClassName: local-path
+  accessMode: ReadWriteOnce
+  size: 2Gi
+  mountPath: /datastore
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+probes:
+  liveness:
+    path: /
+    initialDelaySeconds: 30
+    periodSeconds: 15
+  readiness:
+    path: /
+    initialDelaySeconds: 15
+    periodSeconds: 10
+
+ingress:
+  enabled: true
+  className: traefik
+  host: changedetection.duylai.duckdns.org
+  tlsSecretName: changedetection-tls
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd,kube-system-authentik-auth@kubernetescrd
