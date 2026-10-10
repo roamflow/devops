@@ -1,0 +1,54 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/mlflow/mlflow
+  tag: "v3.17.0"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 5000
+
+server:
+  host: "0.0.0.0"
+  port: 5000
+  workers: 1
+  backendStoreUri: "sqlite:////mlflow/mlflow.db"
+  defaultArtifactRoot: "/mlflow/artifacts"
+  allowedHosts: "*"
+  corsAllowedOrigins: "https://mlflow.duylai.duckdns.org"
+
+persistence:
+  enabled: true
+  storageClassName: local-path
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  mountPath: /mlflow
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+
+probes:
+  liveness:
+    path: /health
+    initialDelaySeconds: 35
+    periodSeconds: 15
+  readiness:
+    path: /health
+    initialDelaySeconds: 20
+    periodSeconds: 10
+
+ingress:
+  enabled: true
+  className: traefik
+  host: mlflow.duylai.duckdns.org
+  tlsSecretName: mlflow-tls
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd,kube-system-authentik-auth@kubernetescrd
