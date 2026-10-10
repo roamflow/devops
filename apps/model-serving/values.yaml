@@ -22,14 +22,14 @@ service:
 # Off by default: /predict has no authentication of its own, so do not expose
 # it publicly unless a forward-auth middleware or similar protects it.
 ingress:
-  enabled: false
+  enabled: true
   className: traefik
   host: serving.duylai.duckdns.org
   tlsSecretName: model-serving-tls
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd,kube-system-authentik-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd
 
 resources:
   requests:
