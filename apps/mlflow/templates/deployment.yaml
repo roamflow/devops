@@ -48,7 +48,7 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             - |
-              pip install --no-cache-dir psycopg2-binary
+              pip install --no-cache-dir psycopg2-binary "psycopg[binary]"
               exec mlflow server \
                 --backend-store-uri {{ .Values.server.backendStoreUri | quote }} \
                 --default-artifact-root {{ .Values.server.defaultArtifactRoot | quote }} \
