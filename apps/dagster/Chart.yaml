@@ -1,0 +1,6 @@
+apiVersion: v2
+name: dagster
+description: Dagster data platform control plane and PostgreSQL for roamflow MLOps
+type: application
+version: 0.1.0
+appVersion: "1.13.20"

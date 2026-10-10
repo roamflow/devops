@@ -1,0 +1,59 @@
+postgresql:
+  image: postgres:16-alpine
+  storage: 5Gi
+  storageClassName: local-path
+  secretName: dagster-postgresql-secret
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+dagster:
+  image: python:3.11-slim
+  storageClassName: local-path
+  venvStorage: 5Gi
+  runStorage: 5Gi
+  mlflowTrackingUri: "http://mlflow.mlflow.svc.cluster.local:5000"
+  webserver:
+    port: 3000
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+  daemon:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+ingress:
+  enabled: true
+  className: traefik
+  host: dagster.duylai.duckdns.org
+  tlsSecretName: dagster-tls
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd,kube-system-authentik-auth@kubernetescrd
+
+# Workspace configuration: supports both local python_file and future external gRPC code locations
+workspace:
+  pythonFile:
+    enabled: true
+    locationName: sample_project
+    path: /opt/dagster/app/repo.py
+  # External gRPC code locations (populated when deploying separate user code location repos):
+  # grpcServers:
+  #   - host: dagster-user-code
+  #     port: 4000
+  #     locationName: ml_pipelines
+  grpcServers: []

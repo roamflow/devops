@@ -1,0 +1,140 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dagster
+  labels:
+    {{- include "dagster.labels" . | nindent 4 }}
+    app: dagster
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: dagster
+  template:
+    metadata:
+      labels:
+        app: dagster
+    spec:
+      initContainers:
+        - name: wait-for-pg-and-setup-venv
+          image: {{ .Values.dagster.image | quote }}
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+              echo "Checking Python virtualenv for Dagster..."
+              if [ ! -f /opt/dagster/venv/bin/dagster-webserver ]; then
+                echo "Creating virtualenv and installing Dagster stack on ARM64..."
+                python3 -m venv /opt/dagster/venv
+                /opt/dagster/venv/bin/pip install --no-cache-dir \
+                  dagster \
+                  dagster-webserver \
+                  dagster-postgres \
+                  dagster-k8s \
+                  dagster-mlflow \
+                  mlflow~=3.17.0 \
+                  scikit-learn
+                echo "Dagster installation completed."
+              else
+                echo "Dagster virtualenv already initialized."
+              fi
+          volumeMounts:
+            - name: dagster-venv
+              mountPath: /opt/dagster/venv
+      containers:
+        - name: dagster-webserver
+          image: {{ .Values.dagster.image | quote }}
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              exec /opt/dagster/venv/bin/dagster-webserver \
+                -h 0.0.0.0 \
+                -p {{ .Values.dagster.webserver.port }} \
+                -w /opt/dagster/dagster_home/workspace.yaml
+          env:
+            - name: DAGSTER_HOME
+              value: /opt/dagster/dagster_home
+            - name: DAGSTER_PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.secretName }}
+                  key: POSTGRES_PASSWORD
+            - name: MLFLOW_TRACKING_URI
+              value: {{ .Values.dagster.mlflowTrackingUri | quote }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.dagster.webserver.port }}
+          resources:
+            {{- toYaml .Values.dagster.webserver.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /server_info
+              port: {{ .Values.dagster.webserver.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /server_info
+              port: {{ .Values.dagster.webserver.port }}
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          volumeMounts:
+            - name: dagster-venv
+              mountPath: /opt/dagster/venv
+            - name: dagster-config
+              mountPath: /opt/dagster/dagster_home/dagster.yaml
+              subPath: dagster.yaml
+            - name: dagster-config
+              mountPath: /opt/dagster/dagster_home/workspace.yaml
+              subPath: workspace.yaml
+            - name: dagster-config
+              mountPath: /opt/dagster/app/repo.py
+              subPath: repo.py
+            - name: dagster-storage
+              mountPath: /opt/dagster/storage
+
+        - name: dagster-daemon
+          image: {{ .Values.dagster.image | quote }}
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              exec /opt/dagster/venv/bin/dagster-daemon run -w /opt/dagster/dagster_home/workspace.yaml
+          env:
+            - name: DAGSTER_HOME
+              value: /opt/dagster/dagster_home
+            - name: DAGSTER_PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.secretName }}
+                  key: POSTGRES_PASSWORD
+            - name: MLFLOW_TRACKING_URI
+              value: {{ .Values.dagster.mlflowTrackingUri | quote }}
+          resources:
+            {{- toYaml .Values.dagster.daemon.resources | nindent 12 }}
+          volumeMounts:
+            - name: dagster-venv
+              mountPath: /opt/dagster/venv
+            - name: dagster-config
+              mountPath: /opt/dagster/dagster_home/dagster.yaml
+              subPath: dagster.yaml
+            - name: dagster-config
+              mountPath: /opt/dagster/dagster_home/workspace.yaml
+              subPath: workspace.yaml
+            - name: dagster-config
+              mountPath: /opt/dagster/app/repo.py
+              subPath: repo.py
+            - name: dagster-storage
+              mountPath: /opt/dagster/storage
+
+      volumes:
+        - name: dagster-venv
+          persistentVolumeClaim:
+            claimName: dagster-venv
+        - name: dagster-storage
+          persistentVolumeClaim:
+            claimName: dagster-storage
+        - name: dagster-config
+          configMap:
+            name: dagster-config

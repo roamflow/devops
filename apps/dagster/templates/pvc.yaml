@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dagster-postgresql-data
+  labels:
+    {{- include "dagster.labels" . | nindent 4 }}
+    app: dagster-postgresql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.postgresql.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.postgresql.storage }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dagster-venv
+  labels:
+    {{- include "dagster.labels" . | nindent 4 }}
+    app: dagster
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.dagster.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.dagster.venvStorage }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dagster-storage
+  labels:
+    {{- include "dagster.labels" . | nindent 4 }}
+    app: dagster
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.dagster.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.dagster.runStorage }}

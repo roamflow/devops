@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dagster-webserver
+  labels:
+    {{- include "dagster.labels" . | nindent 4 }}
+    app: dagster
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.dagster.webserver.port }}
+      targetPort: {{ .Values.dagster.webserver.port }}
+      name: http
+  selector:
+    app: dagster
