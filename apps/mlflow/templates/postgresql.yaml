@@ -1,0 +1,88 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow-postgresql
+  labels:
+    {{- include "mlflow.labels" . | nindent 4 }}
+    app: mlflow-postgresql
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mlflow-postgresql
+  template:
+    metadata:
+      labels:
+        app: mlflow-postgresql
+    spec:
+      containers:
+        - name: postgresql
+          image: {{ .Values.postgresql.image | quote }}
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: {{ .Values.postgresql.secretName }}
+          ports:
+            - name: postgresql
+              containerPort: 5432
+          resources:
+            {{- toYaml .Values.postgresql.resources | nindent 12 }}
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - mlflow
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - mlflow
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: postgresql-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgresql-data
+          persistentVolumeClaim:
+            claimName: mlflow-postgresql-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow-postgresql
+  labels:
+    {{- include "mlflow.labels" . | nindent 4 }}
+    app: mlflow-postgresql
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+      name: postgresql
+  selector:
+    app: mlflow-postgresql
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mlflow-postgresql-data
+  labels:
+    {{- include "mlflow.labels" . | nindent 4 }}
+    app: mlflow-postgresql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.postgresql.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.postgresql.storage }}
+{{- end }}

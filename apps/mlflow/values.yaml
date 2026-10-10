@@ -9,11 +9,25 @@ service:
   type: ClusterIP
   port: 5000
 
+postgresql:
+  enabled: true
+  image: postgres:16-alpine
+  storage: 5Gi
+  storageClassName: local-path
+  secretName: mlflow-postgresql-secret
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
 server:
   host: "0.0.0.0"
   port: 5000
-  workers: 1
-  backendStoreUri: "sqlite:////mlflow/mlflow.db"
+  workers: 2
+  backendStoreUri: "postgresql://mlflow:${POSTGRES_PASSWORD}@mlflow-postgresql:5432/mlflow"
   defaultArtifactRoot: "/mlflow/artifacts"
   allowedHosts: "*"
   corsAllowedOrigins: "https://mlflow.duylai.duckdns.org"
