@@ -269,6 +269,166 @@ data:
               "legendFormat": "Class {{`{{predicted_class}}`}}"
             }
           ]
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 },
+          "id": 103,
+          "title": "Data Drift Monitoring: Kolmogorov-Smirnov Test (P-Values)",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [
+                {
+                  "options": {
+                    "0": { "color": "green", "index": 0, "text": "HEALTHY (NO DRIFT)" },
+                    "1": { "color": "red", "index": 1, "text": "DRIFT DETECTED" }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 1 }
+                ]
+              }
+            }
+          },
+          "gridPos": { "h": 7, "w": 6, "x": 0, "y": 22 },
+          "id": 9,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "title": "Overall Drift Health",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "max(model_serving_feature_drift_detected) or vector(0)",
+              "format": "time_series",
+              "legendFormat": "Drift Status"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "custom": {
+                "align": "auto",
+                "cellOptions": { "type": "auto" },
+                "inspect": false
+              },
+              "decimals": 4,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 0.05 }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Value" },
+                "properties": [
+                  { "id": "displayName", "value": "KS Test P-Value" },
+                  { "id": "custom.cellOptions", "value": { "mode": "gradient", "type": "color-background" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "feature" },
+                "properties": [
+                  { "id": "displayName", "value": "Feature Name" }
+                ]
+              }
+            ]
+          },
+          "gridPos": { "h": 7, "w": 8, "x": 6, "y": 22 },
+          "id": 10,
+          "options": {
+            "cellHeight": "sm",
+            "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+            "showHeader": true,
+            "sortBy": []
+          },
+          "title": "Feature Drift P-Values (Table)",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "app_version": true,
+                  "endpoint": true,
+                  "instance": true,
+                  "job": true,
+                  "model_name": true,
+                  "pod": true,
+                  "service": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "KS Test P-Value",
+                  "feature": "Feature Name"
+                }
+              }
+            }
+          ],
+          "type": "table",
+          "targets": [
+            {
+              "expr": "model_serving_feature_drift_p_value",
+              "format": "table",
+              "instant": true
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth" },
+              "decimals": 4,
+              "max": 1.05,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 0.05 }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": { "h": 7, "w": 10, "x": 14, "y": 22 },
+          "id": 11,
+          "options": {
+            "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "multi", "sort": "none" }
+          },
+          "title": "Feature P-Values vs Significance Threshold (α = 0.05)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "model_serving_feature_drift_p_value",
+              "legendFormat": "{{`{{feature}}`}} (p-val)"
+            }
+          ]
         }
       ],
       "refresh": "10s",
