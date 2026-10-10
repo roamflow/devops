@@ -1,0 +1,7 @@
+apiVersion: v2
+name: model-serving
+description: ML model serving service (FastAPI) for the roamflow MLOps lab
+type: application
+version: 0.1.0
+# Application version; used as the image tag only when image.tag is empty.
+appVersion: "latest"

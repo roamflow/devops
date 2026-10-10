@@ -1,0 +1,90 @@
+replicaCount: 1  # ignored when autoscaling.enabled is true
+
+image:
+  repository: ghcr.io/roamflow/model-serving
+  # Pin an immutable tag (git SHA) so rollouts and rollbacks are traceable.
+  # Falls back to Chart.appVersion when empty.
+  tag: "sha-1b0d133ec790d1e8151ae6983109bb7acfe049ee"
+  pullPolicy: IfNotPresent
+
+# Extra environment variables for the container.
+# Example for loading from the MLflow registry (needs an image built with
+# WITH_MLFLOW=true):
+#   MODEL_URI: models:/iris-classifier/Production
+#   MLFLOW_TRACKING_URI: http://mlflow.mlflow.svc.cluster.local:5000
+env: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+# Off by default: /predict has no authentication of its own, so do not expose
+# it publicly unless a forward-auth middleware or similar protects it.
+ingress:
+  enabled: false
+  className: traefik
+  host: serving.duylai.duckdns.org
+  tlsSecretName: model-serving-tls
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd,kube-system-authentik-auth@kubernetescrd
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    # No CPU limit on purpose: CPU limits cause throttling and p99 latency
+    # spikes. Memory is limited because exceeding it is an OOM, not a slowdown.
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70  # percent of resources.requests.cpu
+
+# Probes. The app loads the model during startup, so it only answers HTTP once
+# loaded: startupProbe gives it time without letting livenessProbe kill it.
+probes:
+  startup:
+    path: /health
+    periodSeconds: 2
+    failureThreshold: 30  # up to 60s to load the model
+  liveness:
+    path: /health
+    periodSeconds: 10
+    failureThreshold: 3
+  readiness:
+    path: /ready
+    periodSeconds: 5
+    failureThreshold: 2
+
+# Rolling update: never drop below desired capacity, add one extra pod first.
+strategy:
+  maxSurge: 1
+  maxUnavailable: 0
+
+# Time for in-flight requests to finish, plus a short preStop delay so the
+# endpoint is removed from Service/Ingress before the process gets SIGTERM.
+terminationGracePeriodSeconds: 30
+preStopSleepSeconds: 5
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -12,3 +12,4 @@ resources:
   - mlflow.yaml
   - dagster.yaml
   - changedetection.yaml
+  - model-serving.yaml
