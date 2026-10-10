@@ -38,6 +38,8 @@ spec:
           env:
             - name: PORT
               value: {{ .Values.service.targetPort | quote }}
+            - name: APP_VERSION
+              value: {{ .Values.image.tag | default .Chart.AppVersion | quote }}
             {{- range $name, $value := .Values.env }}
             - name: {{ $name }}
               value: {{ $value | quote }}
