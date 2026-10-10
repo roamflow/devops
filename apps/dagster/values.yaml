@@ -16,7 +16,6 @@ dagster:
   storageClassName: local-path
   venvStorage: 5Gi
   runStorage: 5Gi
-  mlflowTrackingUri: "http://mlflow.mlflow.svc.cluster.local:5000"
   webserver:
     port: 3000
     resources:
@@ -45,15 +44,11 @@ ingress:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd,kube-system-authentik-auth@kubernetescrd
 
-# Workspace configuration: supports both local python_file and future external gRPC code locations
+# External gRPC code locations (populated when deploying separate user code location repos)
 workspace:
-  pythonFile:
-    enabled: true
-    locationName: sample_project
-    path: /opt/dagster/app/repo.py
-  # External gRPC code locations (populated when deploying separate user code location repos):
-  # grpcServers:
-  #   - host: dagster-user-code
-  #     port: 4000
-  #     locationName: ml_pipelines
   grpcServers: []
+  # Example:
+  # grpcServers:
+  #   - host: dagster-pipeline-code
+  #     port: 4000
+  #     locationName: iris_pipeline
