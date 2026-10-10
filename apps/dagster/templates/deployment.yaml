@@ -35,10 +35,15 @@ spec:
                   dagster-k8s \
                   dagster-mlflow \
                   mlflow~=3.17.0 \
+                  "psycopg[binary]" \
                   scikit-learn
                 echo "Dagster installation completed."
               else
                 echo "Dagster virtualenv already initialized."
+                if ! /opt/dagster/venv/bin/python -c "import psycopg" 2>/dev/null; then
+                  echo "Installing missing psycopg..."
+                  /opt/dagster/venv/bin/pip install --no-cache-dir "psycopg[binary]"
+                fi
               fi
           volumeMounts:
             - name: dagster-venv
