@@ -4,12 +4,11 @@ kind: Kustomization
 resources:
   - infrastructure.yaml
   - headlamp.yaml
-  - vikunja.yaml
-  - gitea.yaml
   - authentik.yaml
   - stirling-pdf.yaml
   - monitoring.yaml
   - mlflow.yaml
   - dagster.yaml
+  - ml-pipelines.yaml
   - changedetection.yaml
   - model-serving.yaml
