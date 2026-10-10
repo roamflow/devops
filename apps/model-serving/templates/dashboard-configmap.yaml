@@ -1,0 +1,285 @@
+{{- if .Values.dashboard.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "model-serving.fullname" . }}-dashboard
+  labels:
+    {{- include "model-serving.labels" . | nindent 4 }}
+    grafana_dashboard: "1"
+data:
+  model-serving.json: |-
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+          "id": 100,
+          "title": "Model Health & Overview",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+          "id": 1,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "title": "Active Production Model",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "model_serving_model_info",
+              "format": "time_series",
+              "legendFormat": "{{`{{model_name}} ({{app_version}})`}}"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+              "unit": "reqps"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+          "id": 2,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "title": "Serving Throughput (QPS)",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "sum(rate(model_serving_requests_total[1m])) or vector(0)",
+              "format": "time_series",
+              "legendFormat": "QPS"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 25 },
+                  { "color": "red", "value": 50 }
+                ]
+              },
+              "unit": "ms"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+          "id": 3,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "title": "P95 End-to-End Latency",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "(histogram_quantile(0.95, sum(rate(model_serving_request_duration_seconds_bucket{endpoint=\"/predict\"}[2m])) by (le)) * 1000) or vector(0)",
+              "format": "time_series",
+              "legendFormat": "P95 Latency"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "red", "value": 5 }
+                ]
+              },
+              "unit": "percent"
+            }
+          },
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+          "id": 4,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+            "textMode": "auto"
+          },
+          "title": "Inference Error Rate",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "((sum(rate(model_serving_requests_total{status_code=~\"5..\"}[2m])) or vector(0)) / (sum(rate(model_serving_requests_total[2m])) > 0) * 100) or vector(0)",
+              "format": "time_series",
+              "legendFormat": "Error %"
+            }
+          ]
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+          "id": 101,
+          "title": "Traffic & Latency Deep-Dive",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth" },
+              "unit": "reqps"
+            }
+          },
+          "gridPos": { "h": 7, "w": 12, "x": 0, "y": 6 },
+          "id": 5,
+          "title": "Requests by Status Code",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "sum(rate(model_serving_requests_total[1m])) by (status_code)",
+              "legendFormat": "HTTP {{`{{status_code}}`}}"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth" },
+              "unit": "ms"
+            }
+          },
+          "gridPos": { "h": 7, "w": 12, "x": 12, "y": 6 },
+          "id": 6,
+          "title": "Latency Breakdown: End-to-End vs Pure Model Predict()",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(model_serving_request_duration_seconds_bucket{endpoint=\"/predict\"}[2m])) by (le)) * 1000",
+              "legendFormat": "E2E P99"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(model_serving_request_duration_seconds_bucket{endpoint=\"/predict\"}[2m])) by (le)) * 1000",
+              "legendFormat": "E2E P95"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(model_serving_request_duration_seconds_bucket{endpoint=\"/predict\"}[2m])) by (le)) * 1000",
+              "legendFormat": "E2E P50"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum(rate(model_serving_inference_duration_seconds_bucket[2m])) by (le)) * 1000",
+              "legendFormat": "Model predict() P99"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(model_serving_inference_duration_seconds_bucket[2m])) by (le)) * 1000",
+              "legendFormat": "Model predict() P50"
+            }
+          ]
+        },
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+          "id": 102,
+          "title": "ML Observability & Label Shift / Output Drift",
+          "type": "row"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "stacking": { "mode": "normal" } },
+              "unit": "short"
+            }
+          },
+          "gridPos": { "h": 7, "w": 14, "x": 0, "y": 14 },
+          "id": 7,
+          "title": "Prediction Distribution by Class over Time (Output Drift / Label Shift)",
+          "type": "timeseries",
+          "targets": [
+            {
+              "expr": "sum(rate(model_serving_predictions_total[1m])) by (predicted_class)",
+              "legendFormat": "Class {{`{{predicted_class}}`}}"
+            }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "unit": "short"
+            }
+          },
+          "gridPos": { "h": 7, "w": 10, "x": 14, "y": 14 },
+          "id": 8,
+          "options": {
+            "displayLabels": ["percent", "name"],
+            "legend": { "displayMode": "table", "placement": "right" },
+            "pieType": "donut"
+          },
+          "title": "Prediction Class Ratio (Iris Classes Share)",
+          "type": "piechart",
+          "targets": [
+            {
+              "expr": "sum(increase(model_serving_predictions_total[1h])) by (predicted_class)",
+              "legendFormat": "Class {{`{{predicted_class}}`}}"
+            }
+          ]
+        }
+      ],
+      "refresh": "10s",
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": ["mlops", "model-serving", "mlflow"],
+      "time": { "from": "now-30m", "to": "now" },
+      "timepicker": {},
+      "timezone": "",
+      "title": "MLOps: Model Serving & Drift Monitoring",
+      "uid": "ml-model-serving-iris",
+      "version": 1
+    }
+{{- end }}

@@ -90,3 +90,13 @@ securityContext:
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+serviceMonitor:
+  enabled: true
+  release: monitoring
+  path: /metrics
+  interval: 15s
+  scrapeTimeout: 10s
+
+dashboard:
+  enabled: true
