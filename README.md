@@ -37,7 +37,7 @@ flowchart TD
         end
 
         subgraph MLflowNS["Namespace: mlflow"]
-            MLflow["MLflow 3.15.2 Server\n(FastAPI / Uvicorn :5000)"]
+            MLflow["MLflow 3.17.0 Server\n(FastAPI / Uvicorn :5000)"]
             MLflowStorage[("PVC: mlflow-data\nSQLite DB & Model Artifacts")]
         end
     end
@@ -67,7 +67,7 @@ All services are exposed via Traefik with automatic Let's Encrypt certificates i
 | Service | Namespace | Hostname | Description | Authentication |
 | :--- | :--- | :--- | :--- | :--- |
 | **Dagster Platform** | `dagster` | `https://dagster.duylai.duckdns.org` | Asset-based data & ML orchestrator UI | Authentik SSO (ForwardAuth) |
-| **MLflow Server** | `mlflow` | `https://mlflow.duylai.duckdns.org` | Experiment tracking & model registry (v3.15.2) | Authentik SSO (ForwardAuth) |
+| **MLflow Server** | `mlflow` | `https://mlflow.duylai.duckdns.org` | Experiment tracking & model registry (v3.17.0) | Authentik SSO (ForwardAuth) |
 | **Authentik SSO** | `authentik` | `https://auth.duylai.duckdns.org` | Centralized identity provider & proxy outpost | Native Authentik Auth |
 | **Grafana Dashboards** | `monitoring` | `https://grafana.duylai.duckdns.org` | Metrics visualization & cluster dashboards | Authentik OIDC OAuth |
 | **Headlamp** | `headlamp` | `https://headlamp.duylai.duckdns.org` | Kubernetes cluster management dashboard | Authentik SSO (ForwardAuth) |
@@ -82,7 +82,7 @@ All services are exposed via Traefik with automatic Let's Encrypt certificates i
 ## MLOps Stack Deep Dive
 
 ### 1. MLflow Tracking Server (`apps/mlflow`)
-* **Engine**: MLflow `v3.15.2` running on FastAPI / Uvicorn with native `linux/arm64` support.
+* **Engine**: MLflow `v3.17.0` running on FastAPI / Uvicorn with native `linux/arm64` support.
 * **Storage**: Single 10 GiB `local-path` PersistentVolumeClaim storing both SQLite database (`/mlflow/mlflow.db`) and artifact models (`/mlflow/artifacts`).
 * **Resource Optimization**: Tuned with `--workers 1` (Uvicorn async), `requests: 1.5Gi`, and `limits: 3Gi` to ensure zero OOM crashes while maintaining high throughput.
 * **Internal Networking**: Other pods inside the cluster communicate directly via `http://mlflow.mlflow.svc.cluster.local:5000`, bypassing Ingress authentication.
@@ -141,7 +141,7 @@ devops/
     │   ├── dagster-config.yaml         # ConfigMap (dagster.yaml, workspace.yaml, repo.py)
     │   ├── sealed-secret.yaml          # Encrypted PostgreSQL credentials
     │   └── kustomization.yaml
-    ├── mlflow/                         # MLflow 3.15.2 Tracking Server & SQLite
+    ├── mlflow/                         # MLflow 3.17.0 Tracking Server & SQLite
     │   ├── mlflow.yaml                 # Deployment, service, PVC, and ingress
     │   └── kustomization.yaml
     ├── gitea/                          # Gitea Git service & container registry
