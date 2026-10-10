@@ -43,9 +43,9 @@ Cluster `roamflow`: k3s v1.34, 2 node ARM64 (2 vCPU / 12GB mỗi node), OCI Alwa
 
 Thứ tự ưu tiên nếu thiếu thời gian: **1 → 2 → 6 → 8 → 4 → 3 → 5 → 7**
 
-- [ ] **Bước 1 – Helm chart `model-serving`**
+- [x] **Bước 1 – Helm chart `model-serving`**
   - Tự viết: Deployment, Service, Ingress, HPA, `values.yaml`, `_helpers.tpl`.
-  - Học: templating, values, probe, resource, HPA.
+  - Học: templating, values, probe, resource, HPA, GitHub Actions ARM64 build.
   - Câu hỏi phỏng vấn: "Design a low-latency serving layer."
 - [ ] **Bước 2 – Rollout an toàn + rollback**
   - Rolling update, canary hoặc blue/green, rollback khi metric xấu.
@@ -113,6 +113,7 @@ Thứ tự ưu tiên nếu thiếu thời gian: **1 → 2 → 6 → 8 → 4 → 
 |---|---|---|---|
 | 2026-10-10 | Đọc repo devops, chốt lộ trình, tạo file này | Chưa bắt đầu Bước 1; chưa có ngày phỏng vấn | – |
 | 2026-10-10 | Tạo project `model-serving` (uv, FastAPI + MLflow client 3.17.0). Nâng MLflow server 3.15.2 → 3.17.0 (backup SQLite, push, Argo sync, `/health` 200). Cập nhật README | Chưa có code app; backup ở `devops/.secrets/backups/` có thể xoá sau vài ngày | Argo auto-sync + `Recreate` gây downtime ngắn; nên ghim client cùng version server; build image phải `linux/arm64` (máy x86_64, cluster ARM64) |
+| 2026-10-10 | Hoàn thành **Bước 1**: FastAPI app, lifespan load model, liveness/readiness/startup probes, GitHub Actions ARM64 build ra ghcr.io, Helm chart tự viết đầy đủ (Deployment, Service, HPA, Ingress, helpers), Argo CD App deployed và Healthy trên k3s ARM64. | Chưa có rollout an toàn / canary (sang Bước 2) | Khác biệt liveness vs readiness; omission `replicas` khi dùng HPA trong Helm; không giới hạn CPU limit tránh latency throttling; zero-downtime rolling update (maxUnavailable: 0, maxSurge: 1, preStop sleep). |
 
 ---
 
