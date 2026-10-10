@@ -26,9 +26,10 @@ postgresql:
 server:
   host: "0.0.0.0"
   port: 5000
-  workers: 2
+  workers: 1
   backendStoreUri: "postgresql+psycopg2://mlflow:${POSTGRES_PASSWORD}@mlflow-postgresql:5432/mlflow"
-  defaultArtifactRoot: "/mlflow/artifacts"
+  artifactsDestination: "/mlflow/artifacts"
+  serveArtifacts: true
   allowedHosts: "*"
   corsAllowedOrigins: "https://mlflow.duylai.duckdns.org"
 
@@ -41,11 +42,11 @@ persistence:
 
 resources:
   requests:
-    cpu: 200m
-    memory: 512Mi
+    cpu: 100m
+    memory: 256Mi
   limits:
     cpu: 1000m
-    memory: 2Gi
+    memory: 1.5Gi
 
 probes:
   liveness:

@@ -48,16 +48,26 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             - |
-              pip install --no-cache-dir psycopg2-binary "psycopg[binary]"
+              pip install --no-cache-dir psycopg2-binary
               exec mlflow server \
                 --backend-store-uri {{ .Values.server.backendStoreUri | quote }} \
+                {{- if .Values.server.artifactsDestination }}
+                --artifacts-destination {{ .Values.server.artifactsDestination | quote }} \
+                {{- end }}
+                {{- if .Values.server.serveArtifacts }}
+                --serve-artifacts \
+                {{- end }}
+                {{- if and .Values.server.defaultArtifactRoot (not .Values.server.artifactsDestination) }}
                 --default-artifact-root {{ .Values.server.defaultArtifactRoot | quote }} \
+                {{- end }}
                 --host {{ .Values.server.host | quote }} \
                 --port {{ .Values.server.port | quote }} \
                 --workers {{ .Values.server.workers | quote }} \
                 --allowed-hosts {{ .Values.server.allowedHosts | quote }} \
                 --cors-allowed-origins {{ .Values.server.corsAllowedOrigins | quote }}
           env:
+            - name: MLFLOW_PORT
+              value: {{ .Values.server.port | quote }}
             {{- if .Values.postgresql.enabled }}
             - name: POSTGRES_PASSWORD
               valueFrom:
