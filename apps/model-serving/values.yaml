@@ -4,7 +4,7 @@ image:
   repository: ghcr.io/roamflow/model-serving
   # Pin an immutable tag (git SHA) so rollouts and rollbacks are traceable.
   # Falls back to Chart.appVersion when empty.
-  tag: "v0.1.0-d262728"
+  tag: "v0.1.0-51c6c21"
   pullPolicy: IfNotPresent
 
 # Extra environment variables for the container.
