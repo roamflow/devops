@@ -63,15 +63,15 @@ Thứ tự ưu tiên nếu thiếu thời gian: **1 → 2 → 6 → 8 → 4 → 
 - [ ] **Bước 6 – Observability cho ML**
   - ServiceMonitor, dashboard Grafana (latency, throughput, error), một metric drift đơn giản.
   - Câu hỏi: "What do you monitor besides CPU and memory?"
-- [ ] **Bước 7 – Nâng MLflow lên Postgres + MinIO**
-  - Giải thích trade-off so với SQLite + PVC.
+- [x] **Bước 7 – Nâng MLflow lên Postgres + PVC**
+  - Giải thích trade-off so với SQLite + PVC (đã hoàn thành: PostgreSQL 16 Alpine, SealedSecret, RollingUpdate).
   - Câu hỏi: "Why is SQLite not production ready? What breaks first?"
 - [ ] **Bước 8 – Incident / Chaos (viết STAR)**
   - Cố ý gây: OOM, kill pod, rollout lỗi, data xấu. Trace nguyên nhân, sửa, thêm guardrail.
   - Câu hỏi: "Tell me about a production failure."
 
 **Việc bổ sung (nhẹ, làm xen kẽ)**
-- [ ] CI/CD: test → build image → push Gitea registry → Argo CD sync.
+- [x] CI/CD: test → build native ARM64 image → push GHCR → Argo CD sync tự động qua GitOps promotion.
 - [ ] Đóng gói Dagster thành image riêng (thay venv lúc init).
 - [ ] Feature store và train-serve skew: chỉ cần giải thích được, có thể thử ví dụ nhỏ.
 
