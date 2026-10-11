@@ -1,0 +1,6 @@
+apiVersion: v2
+name: mealie
+description: Recipe manager and meal planner for roamflow
+type: application
+version: 0.1.0
+appVersion: "latest"

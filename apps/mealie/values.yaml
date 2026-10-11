@@ -1,0 +1,58 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/mealie-recipes/mealie
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+env:
+  baseUrl: "https://mealie.duylai.duckdns.org"
+  dbEngine: "sqlite"
+  allowSignup: "true"
+  puid: "1000"
+  pgid: "1000"
+  maxWorkers: "1"
+
+service:
+  type: ClusterIP
+  port: 9000
+
+persistence:
+  enabled: true
+  claimName: mealie-data
+  storageClassName: local-path
+  accessMode: ReadWriteOnce
+  size: 5Gi
+  mountPath: /app/data
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+probes:
+  liveness:
+    path: /
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+ingress:
+  enabled: true
+  className: traefik
+  host: mealie.duylai.duckdns.org
+  tlsSecretName: mealie-tls
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd
