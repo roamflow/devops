@@ -12,3 +12,4 @@ resources:
   - ml-pipelines.yaml
   - changedetection.yaml
   - model-serving.yaml
+  - mealie.yaml
