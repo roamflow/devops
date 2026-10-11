@@ -44,13 +44,12 @@ All public endpoints are routed through Traefik using automatic Let's Encrypt TL
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Argo CD** | `argocd` | `https://argocd.duylai.duckdns.org` | `argocd-server:80` | 80, 443 | Valid Let's Encrypt TLS |
 | **Headlamp** | `headlamp` | `https://headlamp.duylai.duckdns.org` | `headlamp:80` | 80, 443 | Valid Let's Encrypt TLS |
-| **Vikunja** | `vikunja` | `https://tasks.duylai.duckdns.org` | `vikunja:3456` | 80, 443 | Valid Let's Encrypt TLS |
-| **Gitea** | `gitea` | `https://gitea.duylai.duckdns.org` | `gitea-http:3000` | 80, 443 | Valid Let's Encrypt TLS |
 | **Authentik SSO** | `authentik` | `https://auth.duylai.duckdns.org` | `authentik-server:80` | 80, 443 | Valid Let's Encrypt TLS |
 | **Stirling PDF** | `stirling-pdf` | `https://pdf.duylai.duckdns.org` | `stirling-pdf-stirling-pdf-chart:8080` | 80, 443 | Valid Let's Encrypt TLS |
 | **Grafana Dashboards** | `monitoring` | `https://grafana.duylai.duckdns.org` | `monitoring-grafana:80` | 80, 443 | Valid Let's Encrypt TLS |
 | **MLflow Tracking** | `mlflow` | `https://mlflow.duylai.duckdns.org` | `mlflow:5000` | 80, 443 | Valid Let's Encrypt TLS (Authentik SSO) |
 | **Dagster Platform** | `dagster` | `https://dagster.duylai.duckdns.org` | `dagster-webserver:3000` | 80, 443 | Valid Let's Encrypt TLS (Authentik SSO) |
+| **Model Serving** | `model-serving` | `https://serving.duylai.duckdns.org` | `model-serving:8000` | 80, 443 | Valid Let's Encrypt TLS |
 | **Changedetection** | `changedetection` | `https://changedetection.duylai.duckdns.org` | `changedetection:5000` | 80, 443 | Valid Let's Encrypt TLS (Authentik SSO) |
 
 ---
@@ -70,15 +69,15 @@ devops/
 │   └── roamflow/                       # Argo CD Applications (App-of-Apps)
 │       ├── root-app.yaml               # Root Application entrypoint
 │       ├── infrastructure.yaml         # Argo CD app for core infra
-│       ├── headlamp.yaml               # Argo CD app for Headlamp
-│       ├── vikunja.yaml                # Argo CD app for Vikunja
-│       ├── gitea.yaml                  # Argo CD app for Gitea Helm chart
 │       ├── authentik.yaml              # Argo CD app for Authentik SSO
-│       ├── stirling-pdf.yaml           # Argo CD app for Stirling-PDF
-│       ├── monitoring.yaml             # Argo CD app for Prometheus & Grafana
-│       ├── mlflow.yaml                 # Argo CD app for MLflow Tracking Server
-│       ├── dagster.yaml                # Argo CD app for Dagster Data Platform
 │       ├── changedetection.yaml        # Argo CD app for Changedetection.io
+│       ├── dagster.yaml                # Argo CD app for Dagster Data Platform
+│       ├── headlamp.yaml               # Argo CD app for Headlamp
+│       ├── ml-pipelines.yaml           # Argo CD app for ML Pipelines (Dagster code location)
+│       ├── mlflow.yaml                 # Argo CD app for MLflow Tracking Server
+│       ├── model-serving.yaml          # Argo CD app for Model Serving & Drift Monitoring
+│       ├── monitoring.yaml             # Argo CD app for Prometheus, Grafana & Loki
+│       ├── stirling-pdf.yaml           # Argo CD app for Stirling-PDF
 │       └── kustomization.yaml
 ├── infrastructure/                     # Cluster-wide components
 │   ├── cert-manager/
@@ -88,16 +87,16 @@ devops/
 │   ├── argocd/
 │   │   └── ingress.yaml                # Argo CD Ingress
 │   └── kustomization.yaml
-└── apps/                               # Declarative workload manifests
-    ├── authentik/                      # Authentik Identity & SSO Platform
-    ├── changedetection/                # Changedetection.io Website Monitor (Kustomize)
-    ├── dagster/                        # Dagster Webserver, Daemon & Postgres
-    ├── gitea/                          # Gitea Helm Chart & Values
-    ├── headlamp/                       # Headlamp Dashboard (Kustomize)
-    ├── mlflow/                         # MLflow Tracking Server & SQLite
-    ├── monitoring/                     # Prometheus, Grafana, Node Exporter
-    ├── stirling-pdf/                   # Stirling-PDF Tool (Helm Chart)
-    └── vikunja/                        # Vikunja Task Management (Kustomize)
+└── apps/                               # Standardized Helm Charts
+    ├── authentik/                      # Authentik Identity & SSO Platform (Helm)
+    ├── changedetection/                # Changedetection.io Website Monitor (Helm)
+    ├── dagster/                        # Dagster Webserver, Daemon & PostgreSQL (Helm)
+    ├── headlamp/                       # Headlamp Dashboard (Helm)
+    ├── ml-pipelines/                   # ML Pipelines Dagster Code Location (Helm)
+    ├── mlflow/                         # MLflow Tracking Server & PostgreSQL (Helm)
+    ├── model-serving/                  # FastAPI Model Serving & Drift Monitoring (Helm)
+    ├── monitoring/                     # Prometheus, Grafana, Loki (Helm)
+    └── stirling-pdf/                   # Stirling-PDF Tool (Helm)
 ```
 
 ---
@@ -134,7 +133,6 @@ To safely store secrets in Git:
     ```bash
     kubectl get secret -n headlamp headlamp-admin-token -o jsonpath="{.data.token}" | base64 -d
     ```
-- **Vikunja**: `https://tasks.duylai.duckdns.org`
 
 ---
 

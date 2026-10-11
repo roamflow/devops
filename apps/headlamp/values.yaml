@@ -1,0 +1,42 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/headlamp-k8s/headlamp
+  tag: "v0.44.0"
+  pullPolicy: IfNotPresent
+
+args:
+  - "-in-cluster"
+  - "-plugins-dir=/headlamp/plugins"
+  - "-unsafe-use-service-account-token"
+
+serviceAccount:
+  create: true
+  name: headlamp-admin
+
+rbac:
+  create: true
+  clusterRole: cluster-admin
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 4466
+
+ingress:
+  enabled: true
+  className: traefik
+  host: headlamp.duylai.duckdns.org
+  tlsSecretName: headlamp-tls
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect-https@kubernetescrd,kube-system-authentik-auth@kubernetescrd
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
