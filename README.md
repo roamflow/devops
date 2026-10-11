@@ -81,7 +81,7 @@ All services are exposed via Traefik with automatic Let's Encrypt certificates i
 | **Headlamp** | `headlamp` | `https://headlamp.duylai.duckdns.org` | Kubernetes cluster management dashboard | Authentik SSO (ForwardAuth) |
 | **Stirling PDF** | `stirling-pdf` | `https://pdf.duylai.duckdns.org` | Web-based PDF manipulation utilities | Public / Direct |
 | **Changedetection** | `changedetection` | `https://changedetection.duylai.duckdns.org` | Website & API change detection and monitoring | Authentik SSO (ForwardAuth) |
-| **Argo CD** | `argocd` | `https://argocd.duylai.duckdns.org` | Declarative GitOps deployment engine | Local / Admin Secret |
+| **Argo CD** | `argocd` | `https://argocd.duylai.duckdns.org` | Declarative GitOps deployment engine | Authentik OIDC OAuth (or Local Admin) |
 
 ---
 

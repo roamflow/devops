@@ -6,3 +6,6 @@ resources:
   - middlewares/redirect-https.yaml
   - middlewares/authentik-auth.yaml
   - argocd/ingress.yaml
+  - argocd/sealed-secret.yaml
+  - argocd/argocd-cm.yaml
+  - argocd/argocd-rbac-cm.yaml

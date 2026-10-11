@@ -123,8 +123,8 @@ To safely store secrets in Git:
 ## 6. Access & Credentials
 
 - **Argo CD**: `https://argocd.duylai.duckdns.org`
-  - **Username**: `admin`
-  - **Password**: Retrieve with:
+  - **SSO**: Click **"LOG IN VIA AUTHENTIK"** (Admin role mapped from `authentik Admins` group)
+  - **Local Break-glass Admin**: Username `admin`, retrieve emergency password with:
     ```bash
     kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
     ```
