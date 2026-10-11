@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -e
+
+echo "🔍 Running pre-commit validation for roamflow/devops..."
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$REPO_ROOT"
+
+# 1. Helm Lint & Template
+echo "📦 Checking Helm charts..."
+for app in apps/*; do
+  if [ -f "$app/Chart.yaml" ]; then
+    helm lint "$app" > /dev/null || { echo "❌ Helm lint failed for $app"; exit 1; }
+    helm template test-release "$app" > /dev/null || { echo "❌ Helm template failed for $app"; exit 1; }
+  fi
+done
+
+# 2. Kustomize Build
+echo "🔧 Checking Kustomize builds..."
+kubectl kustomize infrastructure/ > /dev/null || { echo "❌ Kustomize build failed for infrastructure/"; exit 1; }
+kubectl kustomize clusters/roamflow/ > /dev/null || { echo "❌ Kustomize build failed for clusters/roamflow/"; exit 1; }
+
+# 3. Kubeconform Schema Validation (if installed)
+if command -v kubeconform >/dev/null 2>&1; then
+  echo "🛡️  Checking schemas with kubeconform..."
+  for app in apps/*; do
+    if [ -f "$app/Chart.yaml" ]; then
+      helm template test-release "$app" | kubeconform -summary -ignore-missing-schemas -kubernetes-version 1.31.0 > /dev/null || {
+        echo "❌ Kubeconform validation failed for $app"
+        exit 1
+      }
+    fi
+  done
+  kubectl kustomize infrastructure/ | kubeconform -summary -ignore-missing-schemas -kubernetes-version 1.31.0 > /dev/null || {
+    echo "❌ Kubeconform validation failed for infrastructure/"
+    exit 1
+  }
+fi
+
+echo "✅ All pre-commit checks passed!"
+exit 0
